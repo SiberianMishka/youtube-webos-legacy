@@ -20,7 +20,18 @@ module.exports = (env) => [
     output: {
       path: path.resolve(__dirname, './dist'),
       filename: ({ chunk: { name } }) =>
-        name === 'userScript' ? 'webOSUserScripts/[name].js' : '[name].js'
+        name === 'userScript' ? 'webOSUserScripts/[name].js' : '[name].js',
+      // Chrome 38 accepts ES2015 object shorthand, but the WebKit engine used
+      // by webOS 1/2 does not. Keep webpack and its minifier on ES5 output.
+      environment: {
+        arrowFunction: false,
+        bigIntLiteral: false,
+        const: false,
+        destructuring: false,
+        dynamicImport: false,
+        forOf: false,
+        module: false
+      }
     },
     resolve: {
       extensions: ['.ts', '.js']

@@ -44,9 +44,12 @@ class SponsorBlockHandler {
 
   attachVideoTimeout = null;
   nextSkipTimeout = null;
-  sliderInterval = null;
 
-  observer = null;
+  slider = null;
+  sliderInterval = null;
+  sliderObserver = null;
+  sliderSegmentsOverlay = null;
+
   scheduleSkipHandler = null;
   durationChangeHandler = null;
   segments = null;
@@ -134,7 +137,7 @@ class SponsorBlockHandler {
   }
 
   buildOverlay() {
-    if (this.segmentsoverlay) {
+    if (this.sliderSegmentsOverlay) {
       console.info('Overlay already built');
       return;
     }
@@ -146,49 +149,94 @@ class SponsorBlockHandler {
 
     const videoDuration = this.video.duration;
 
-    this.segmentsoverlay = document.createElement('div');
+    this.sliderSegmentsOverlay = document.createElement(
+      'ytaf-sponsorblock-segments'
+    );
+    this.sliderSegmentsOverlay.setAttribute(
+      'idomkey',
+      'ytaf-sponsorblock-segments'
+    );
+    this.sliderSegmentsOverlay.className =
+      'ytaf-sponsorblock-segment-container';
+
     this.segments.forEach((segment) => {
       const [start, end] = segment.segment;
       const barType = barTypes[segment.category] || {
-        color: 'blue',
-        opacity: 0.7
+        color: 'blue'
       };
-      const transform = `translateX(${
-        (start / videoDuration) * 100.0
-      }%) scaleX(${(end - start) / videoDuration})`;
       const elm = document.createElement('div');
-      elm.classList.add('ytlr-progress-bar__played');
-      elm.style['background'] = barType.color;
-      elm.style['opacity'] = barType.opacity;
-      elm.style['-webkit-transform'] = transform;
-      console.info('Generated element', elm, 'from', segment, transform);
-      this.segmentsoverlay.appendChild(elm);
+      elm.className = 'ytaf-sponsorblock-segment';
+      elm.style['background-color'] = barType.color;
+      elm.style['left'] = `${(start / videoDuration) * 100.0}%`;
+      elm.style['width'] = `${((end - start) / videoDuration) * 100.0}%`;
+      this.sliderSegmentsOverlay.appendChild(elm);
     });
 
-    this.observer = new MutationObserver((mutations) => {
+    const addSliderObserver = (element) => {
+      this.sliderObserver.observe(element, {
+        childList: true,
+        subtree: true
+      });
+    };
+
+    const addSliderOverlay = () => {
+      if (this.slider) {
+        this.slider.appendChild(this.sliderSegmentsOverlay);
+      }
+    };
+
+    const watchForSlider = () => {
+      if (this.sliderInterval) {
+        clearInterval(this.sliderInterval);
+      }
+
+      this.sliderInterval = setInterval(() => {
+        const progressBars = document.querySelectorAll(
+          "[idomkey='progress-bar']"
+        );
+        const lastProgressBar = progressBars[progressBars.length - 1];
+
+        if (progressBars.length === 3) {
+          // A progress bar with chapter markers is itself the slider.
+          this.slider = lastProgressBar;
+        } else if (progressBars.length === 2) {
+          // A regular progress bar has a dedicated slider child.
+          this.slider = lastProgressBar.querySelector("[idomkey='slider']");
+        } else {
+          return;
+        }
+
+        if (!this.slider) {
+          return;
+        }
+
+        console.info('Slider found, adding SponsorBlock segments...');
+        clearInterval(this.sliderInterval);
+        this.sliderInterval = null;
+        addSliderObserver(lastProgressBar);
+        addSliderOverlay();
+      }, 100);
+    };
+
+    this.sliderObserver = new MutationObserver((mutations) => {
       mutations.forEach((m) => {
         if (m.removedNodes) {
           for (const node of m.removedNodes) {
-            if (node === this.segmentsoverlay) {
+            if (node === this.sliderSegmentsOverlay) {
               console.info('bringing back segments overlay');
-              this.slider.appendChild(this.segmentsoverlay);
+              addSliderOverlay();
+            }
+            if (node === this.slider) {
+              console.info('slider removed, watching again');
+              this.sliderObserver.disconnect();
+              watchForSlider();
             }
           }
         }
       });
     });
 
-    this.sliderInterval = setInterval(() => {
-      this.slider = document.querySelector('.ytlr-progress-bar__slider');
-      if (this.slider) {
-        clearInterval(this.sliderInterval);
-        this.sliderInterval = null;
-        this.observer.observe(this.slider, {
-          childList: true
-        });
-        this.slider.appendChild(this.segmentsoverlay);
-      }
-    }, 500);
+    watchForSlider();
   }
 
   scheduleSkip() {
@@ -273,14 +321,14 @@ class SponsorBlockHandler {
       this.sliderInterval = null;
     }
 
-    if (this.observer) {
-      this.observer.disconnect();
-      this.observer = null;
+    if (this.sliderObserver) {
+      this.sliderObserver.disconnect();
+      this.sliderObserver = null;
     }
 
-    if (this.segmentsoverlay) {
-      this.segmentsoverlay.remove();
-      this.segmentsoverlay = null;
+    if (this.sliderSegmentsOverlay) {
+      this.sliderSegmentsOverlay.remove();
+      this.sliderSegmentsOverlay = null;
     }
 
     if (this.video) {
