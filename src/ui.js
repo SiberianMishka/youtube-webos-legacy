@@ -7,6 +7,97 @@ import { configRead, configWrite } from './config.js';
 window.__spatialNavigation__.keyMode = 'NONE';
 
 const ARROW_KEY_CODE = { 37: 'left', 38: 'up', 39: 'right', 40: 'down' };
+const SEARCH_TEXT_BOX_TAG = 'YTLR-SEARCH-TEXT-BOX';
+const SEARCH_KEYBOARD_SELECTOR = 'ytlr-search-keyboard';
+const SEARCH_REOPEN_MAX_ATTEMPTS = 20;
+const SEARCH_REOPEN_DELAY = 30;
+
+let searchReopenInProgress = false;
+
+function findSearchTextBox(element) {
+  while (element && element !== document) {
+    if (element.tagName === SEARCH_TEXT_BOX_TAG) {
+      return element;
+    }
+    element = element.parentNode;
+  }
+  return null;
+}
+
+function isSearchKeyboardClosed() {
+  const keyboard = document.querySelector(SEARCH_KEYBOARD_SELECTOR);
+  return (
+    keyboard !== null &&
+    window.getComputedStyle(keyboard).pointerEvents === 'none'
+  );
+}
+
+function createSyntheticKeyEvent(type, keyCode) {
+  const evt = document.createEvent('Event');
+  evt.initEvent(type, true, true);
+  Object.defineProperty(evt, 'keyCode', {
+    get: function getKeyCode() {
+      return keyCode;
+    }
+  });
+  Object.defineProperty(evt, 'which', {
+    get: function getWhich() {
+      return keyCode;
+    }
+  });
+  Object.defineProperty(evt, 'charCode', {
+    get: function getCharCode() {
+      return 0;
+    }
+  });
+  return evt;
+}
+
+function reopenSearchFromResults() {
+  if (searchReopenInProgress) {
+    return;
+  }
+
+  searchReopenInProgress = true;
+  let attempts = 0;
+
+  function moveFocusUp() {
+    if (!isSearchKeyboardClosed() || attempts >= SEARCH_REOPEN_MAX_ATTEMPTS) {
+      searchReopenInProgress = false;
+      return;
+    }
+
+    const target = document.activeElement || document;
+    target.dispatchEvent(createSyntheticKeyEvent('keydown', 38));
+    target.dispatchEvent(createSyntheticKeyEvent('keyup', 38));
+    attempts += 1;
+
+    if (isSearchKeyboardClosed()) {
+      setTimeout(moveFocusUp, SEARCH_REOPEN_DELAY);
+    } else {
+      searchReopenInProgress = false;
+    }
+  }
+
+  moveFocusUp();
+}
+
+function handleMagicRemoteSearchClick(evt) {
+  if (
+    evt.type !== 'keydown' ||
+    evt.keyCode !== 13 ||
+    !findSearchTextBox(evt.target) ||
+    !isSearchKeyboardClosed()
+  ) {
+    return false;
+  }
+
+  evt.preventDefault();
+  evt.stopPropagation();
+  evt.stopImmediatePropagation();
+  reopenSearchFromResults();
+  return true;
+}
 
 const uiContainer = document.createElement('div');
 uiContainer.classList.add('ytaf-ui-container');
@@ -136,6 +227,9 @@ const eventHandler = (evt) => {
     evt.keyCode,
     evt.defaultPrevented
   );
+  if (handleMagicRemoteSearchClick(evt)) {
+    return false;
+  }
   if (evt.charCode == 404 || evt.charCode == 172) {
     console.info('Taking over!');
     evt.preventDefault();
