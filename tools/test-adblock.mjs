@@ -70,6 +70,102 @@ function testPlayback() {
   );
 }
 
+function testStringifyDoesNotMutateInput() {
+  const hookedJSON = loadAdBlock(true);
+  const contentPlaybackContext = {
+    isInlinePlaybackNoAd: false,
+    signatureTimestamp: 456
+  };
+  const playbackContext = { contentPlaybackContext };
+  const request = { playbackContext, requestId: 'request-id' };
+
+  const serializedRequest = JSON.parse(hookedJSON.stringify(request));
+
+  assert.equal(
+    serializedRequest.playbackContext.contentPlaybackContext
+      .isInlinePlaybackNoAd,
+    true
+  );
+  assert.strictEqual(request.playbackContext, playbackContext);
+  assert.strictEqual(
+    playbackContext.contentPlaybackContext,
+    contentPlaybackContext
+  );
+  assert.equal(contentPlaybackContext.isInlinePlaybackNoAd, false);
+  assert.equal(request.requestId, 'request-id');
+}
+
+function testFrozenStringifyInput() {
+  const hookedJSON = loadAdBlock(true);
+  const contentPlaybackContext = Object.freeze({ signatureTimestamp: 789 });
+  const playbackContext = Object.freeze({ contentPlaybackContext });
+  const request = Object.freeze({ playbackContext, requestId: 'frozen' });
+  let serialized;
+
+  assert.doesNotThrow(() => {
+    serialized = hookedJSON.stringify(request);
+  });
+  assert.deepEqual(JSON.parse(serialized), {
+    playbackContext: {
+      contentPlaybackContext: {
+        signatureTimestamp: 789,
+        isInlinePlaybackNoAd: true
+      }
+    },
+    requestId: 'frozen'
+  });
+  assert.equal(
+    Object.prototype.hasOwnProperty.call(
+      contentPlaybackContext,
+      'isInlinePlaybackNoAd'
+    ),
+    false
+  );
+}
+
+function testStringifyReplacerAndSpace() {
+  const hookedJSON = loadAdBlock(true);
+  const request = {
+    playbackContext: {
+      contentPlaybackContext: {
+        signatureTimestamp: 321,
+        removeMe: 'remove-me'
+      }
+    },
+    requestId: 'formatted'
+  };
+  const expected = {
+    playbackContext: {
+      contentPlaybackContext: {
+        signatureTimestamp: 321,
+        removeMe: 'remove-me',
+        isInlinePlaybackNoAd: true
+      }
+    },
+    requestId: 'formatted'
+  };
+  const replacer = (key, value) => (key === 'removeMe' ? undefined : value);
+  const whitelist = [
+    'playbackContext',
+    'contentPlaybackContext',
+    'signatureTimestamp',
+    'isInlinePlaybackNoAd'
+  ];
+
+  assert.equal(
+    hookedJSON.stringify(request, replacer, 2),
+    JSON.stringify(expected, replacer, 2)
+  );
+  assert.equal(
+    hookedJSON.stringify(request, whitelist, 4),
+    JSON.stringify(expected, whitelist, 4)
+  );
+  assert.equal(
+    request.playbackContext.contentPlaybackContext.isInlinePlaybackNoAd,
+    undefined
+  );
+}
+
 function testSearchAndShorts() {
   const hookedJSON = loadAdBlock(true);
   const response = hookedJSON.parse(
@@ -167,6 +263,9 @@ function testLoginAndDisabledAdBlock() {
 }
 
 testPlayback();
+testStringifyDoesNotMutateInput();
+testFrozenStringifyInput();
+testStringifyReplacerAndSpace();
 testSearchAndShorts();
 testLoginAndDisabledAdBlock();
 

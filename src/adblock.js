@@ -63,18 +63,52 @@ JSON.parse = function () {
 const origStringify = JSON.stringify;
 JSON.stringify = function (value, replacer, space) {
   if (configRead('enableAdBlock')) {
-    const contentPlaybackContext =
-      value?.playbackContext?.contentPlaybackContext;
-    if (
-      contentPlaybackContext !== null &&
-      typeof contentPlaybackContext === 'object'
-    ) {
-      contentPlaybackContext.isInlinePlaybackNoAd = true;
-    }
+    value = addNoAdPlaybackContext(value);
   }
 
   return origStringify(value, replacer, space);
 };
+
+function addNoAdPlaybackContext(value) {
+  if (value === null || typeof value !== 'object') {
+    return value;
+  }
+
+  const playbackContext = value.playbackContext;
+  if (playbackContext === null || typeof playbackContext !== 'object') {
+    return value;
+  }
+
+  const contentPlaybackContext = playbackContext.contentPlaybackContext;
+  if (
+    contentPlaybackContext === null ||
+    typeof contentPlaybackContext !== 'object'
+  ) {
+    return value;
+  }
+
+  const nextContentPlaybackContext = copyEnumerableProperties(
+    contentPlaybackContext
+  );
+  nextContentPlaybackContext.isInlinePlaybackNoAd = true;
+
+  const nextPlaybackContext = copyEnumerableProperties(playbackContext);
+  nextPlaybackContext.contentPlaybackContext = nextContentPlaybackContext;
+
+  const nextValue = copyEnumerableProperties(value);
+  nextValue.playbackContext = nextPlaybackContext;
+  return nextValue;
+}
+
+function copyEnumerableProperties(value) {
+  const copy = Array.isArray(value) ? [] : {};
+  for (const key in value) {
+    if (Object.prototype.hasOwnProperty.call(value, key)) {
+      copy[key] = value[key];
+    }
+  }
+  return copy;
+}
 
 // Drop `adSlotRenderer`
 // `adSlotRenderer` can occur as,
