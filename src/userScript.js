@@ -15,6 +15,7 @@ document.addEventListener(
 import './adblock.js';
 import './sponsorblock.js';
 import './ui.js';
+import './video-quality.js';
 
 // This IIFE is to keep the video element fill the entire window so that screensaver doesn't kick in.
 (async () => {

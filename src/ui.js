@@ -139,6 +139,7 @@ uiContainer.addEventListener(
 uiContainer.innerHTML = `
 <h1>webOS YouTube Extended</h1>
 <label for="__adblock"><input type="checkbox" id="__adblock" /> Enable AdBlocking</label>
+<label for="__force_high_res_video"><input type="checkbox" id="__force_high_res_video" /> Force Maximum Video Quality</label>
 <label for="__sponsorblock"><input type="checkbox" id="__sponsorblock" /> Enable SponsorBlock</label>
 <blockquote>
 <label for="__sponsorblock_sponsor"><input type="checkbox" id="__sponsorblock_sponsor" /> Skip Sponsor Segments</label>
@@ -157,6 +158,14 @@ uiContainer.querySelector('#__adblock').checked = configRead('enableAdBlock');
 uiContainer.querySelector('#__adblock').addEventListener('change', (evt) => {
   configWrite('enableAdBlock', evt.target.checked);
 });
+
+uiContainer.querySelector('#__force_high_res_video').checked =
+  configRead('forceHighResVideo');
+uiContainer
+  .querySelector('#__force_high_res_video')
+  .addEventListener('change', (evt) => {
+    configWrite('forceHighResVideo', evt.target.checked);
+  });
 
 uiContainer.querySelector('#__sponsorblock').checked =
   configRead('enableSponsorBlock');
