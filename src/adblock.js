@@ -26,6 +26,10 @@ JSON.parse = function () {
     r.adSlots = [];
   }
 
+  if (r.playerAds) {
+    r.playerAds = [];
+  }
+
   // remove ads from home
   const homeSectionListRenderer =
     r?.contents?.tvBrowseRenderer?.content?.tvSurfaceContentRenderer?.content
@@ -46,7 +50,30 @@ JSON.parse = function () {
     removeAdSlotRenderer(searchSectionListRenderer);
   }
 
+  // remove ads from Shorts reel
+  if (Array.isArray(r.entries)) {
+    r.entries = r.entries.filter(
+      (elm) => !elm?.command?.reelWatchEndpoint?.adClientParams?.isAd
+    );
+  }
+
   return r;
+};
+
+const origStringify = JSON.stringify;
+JSON.stringify = function (value, replacer, space) {
+  if (configRead('enableAdBlock')) {
+    const contentPlaybackContext =
+      value?.playbackContext?.contentPlaybackContext;
+    if (
+      contentPlaybackContext !== null &&
+      typeof contentPlaybackContext === 'object'
+    ) {
+      contentPlaybackContext.isInlinePlaybackNoAd = true;
+    }
+  }
+
+  return origStringify(value, replacer, space);
 };
 
 // Drop `adSlotRenderer`

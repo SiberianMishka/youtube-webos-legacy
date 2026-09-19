@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "build": "webpack",
+    "test:adblock": "node tools/test-adblock.mjs",
     "package": "ares-package -n dist",
     "deploy": "node tools/deploy.mjs",
     "launch": "ares-launch youtube.leanback.v4",
