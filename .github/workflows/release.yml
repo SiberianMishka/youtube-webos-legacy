@@ -23,7 +23,8 @@ jobs:
           cache: npm
 
       - run: npm ci
-      - run: npm run build
+      - run: npm run build -- --env production=true
+      - run: npm run test:compat
       - run: npm run package
       - run: npm run manifest
 
