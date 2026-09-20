@@ -40,3 +40,16 @@ and each of: start, navigation, pause/resume and seek. If a failure occurs,
 record only the visible symptom, the active AdBlock setting and the step
 number; do not record account data. Keep the previous known-good IPK available
 for manual rollback.
+
+## Hardware result (2026-09-20)
+
+Pass on LG 47LB679V-ZH / webOS 1.4: automatic login, Home/Search, normal
+playback, pause/resume, seeking, Shorts navigation, GREEN-button settings,
+SponsorBlock segments and automatic skipping remained functional.
+
+With AdBlock disabled, a real advertising video played. With AdBlock enabled
+again, that advertising video did not play. A 3--5 second black YouTube start
+screen labelled "There is an ad" remained in both states; it is not a
+SponsorBlock effect and did not reproduce as a playback failure. Toggling
+AdBlock while the timeline was open did not remove the visible SponsorBlock
+segments in the final verification.
