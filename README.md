@@ -88,11 +88,13 @@ npm install
 
 ```sh
 npm run build -- --env production=true
+npm run test:compat
 npm run package
 ```
 
-The `.ipk` file is generated in the project root. It can be installed with
-Device Manager or the webOS CLI.
+The compatibility check parses every generated JavaScript file as ES5. The
+`.ipk` file is generated in the project root and can be installed with Device
+Manager or the webOS CLI.
 
 ### On the TV
 

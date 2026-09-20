@@ -10,6 +10,7 @@
     "deploy": "node tools/deploy.mjs",
     "launch": "ares-launch youtube.leanback.v4",
     "manifest": "node tools/gen-manifest.js youtube.leanback.v4.manifest.json",
+    "test:compat": "node tools/check-es5.js",
     "version": "node tools/sync-version.js && git add assets/appinfo.json",
     "prepare": "husky install"
   },
@@ -35,6 +36,7 @@
     "@babel/plugin-transform-runtime": "^7.16.8",
     "@babel/preset-env": "^7.16.8",
     "@webosose/ares-cli": "^2.2.0",
+    "acorn": "^8.7.0",
     "babel-loader": "^8.2.3",
     "babel-plugin-polyfill-corejs3": "^0.5.0",
     "babel-plugin-polyfill-regenerator": "^0.3.0",
