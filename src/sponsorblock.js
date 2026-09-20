@@ -196,15 +196,13 @@ class SponsorBlockHandler {
         );
         const lastProgressBar = progressBars[progressBars.length - 1];
 
-        if (progressBars.length === 3) {
-          // A progress bar with chapter markers is itself the slider.
-          this.slider = lastProgressBar;
-        } else if (progressBars.length === 2) {
-          // A regular progress bar has a dedicated slider child.
-          this.slider = lastProgressBar.querySelector("[idomkey='slider']");
-        } else {
+        if (!lastProgressBar) {
           return;
         }
+
+        this.slider =
+          lastProgressBar.querySelector("[idomkey='slider']") ||
+          lastProgressBar;
 
         if (!this.slider) {
           return;
