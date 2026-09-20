@@ -13,6 +13,7 @@ document.addEventListener(
 );
 
 import './adblock.js';
+import './account-selector.js';
 import './sponsorblock.js';
 import './ui.js';
 import './video-quality.js';
