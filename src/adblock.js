@@ -26,6 +26,10 @@ JSON.parse = function () {
     r.adSlots = [];
   }
 
+  if (r.playerAds) {
+    r.playerAds = [];
+  }
+
   // remove ads from home
   const homeSectionListRenderer =
     r?.contents?.tvBrowseRenderer?.content?.tvSurfaceContentRenderer?.content
@@ -46,8 +50,65 @@ JSON.parse = function () {
     removeAdSlotRenderer(searchSectionListRenderer);
   }
 
+  // remove ads from Shorts reel
+  if (Array.isArray(r.entries)) {
+    r.entries = r.entries.filter(
+      (elm) => !elm?.command?.reelWatchEndpoint?.adClientParams?.isAd
+    );
+  }
+
   return r;
 };
+
+const origStringify = JSON.stringify;
+JSON.stringify = function (value, replacer, space) {
+  if (configRead('enableAdBlock')) {
+    value = addNoAdPlaybackContext(value);
+  }
+
+  return origStringify(value, replacer, space);
+};
+
+function addNoAdPlaybackContext(value) {
+  if (value === null || typeof value !== 'object') {
+    return value;
+  }
+
+  const playbackContext = value.playbackContext;
+  if (playbackContext === null || typeof playbackContext !== 'object') {
+    return value;
+  }
+
+  const contentPlaybackContext = playbackContext.contentPlaybackContext;
+  if (
+    contentPlaybackContext === null ||
+    typeof contentPlaybackContext !== 'object'
+  ) {
+    return value;
+  }
+
+  const nextContentPlaybackContext = copyEnumerableProperties(
+    contentPlaybackContext
+  );
+  nextContentPlaybackContext.isInlinePlaybackNoAd = true;
+
+  const nextPlaybackContext = copyEnumerableProperties(playbackContext);
+  nextPlaybackContext.contentPlaybackContext = nextContentPlaybackContext;
+
+  const nextValue = copyEnumerableProperties(value);
+  nextValue.playbackContext = nextPlaybackContext;
+  return nextValue;
+}
+
+function copyEnumerableProperties(value) {
+  const copy = Array.isArray(value) ? [] : {};
+  for (const key in value) {
+    if (Object.prototype.hasOwnProperty.call(value, key)) {
+      copy[key] = value[key];
+    }
+  }
+  return copy;
+}
 
 // Drop `adSlotRenderer`
 // `adSlotRenderer` can occur as,
