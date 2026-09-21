@@ -13,6 +13,8 @@ webOS 1.x/2.x.
 - Force Maximum Video Quality
 - YouTube Logo Removal
 - Bypass account selector screen
+- Fix for the black player overlay shown with current YouTube TV controls
+- Fix for Magic Remote reopening the search keyboard from search results
 
 ## Tested on
 
