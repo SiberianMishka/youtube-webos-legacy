@@ -6,10 +6,14 @@ webOS 1.x/2.x.
 
 ## Features
 
-- YouTube advertisement blocking
-- SponsorBlock
+- Hardened YouTube advertisement blocking for player and Shorts responses
+- SponsorBlock with coloured timeline markers and segment skipping
 - GREEN-button configuration
 - Fix for the black player overlay shown with current YouTube TV controls
+- Fix for Magic Remote reopening the search keyboard from search results
+- Optional Force Maximum Video Quality setting (disabled by default)
+- Optional Hide YouTube logo setting (disabled by default)
+- Safe automatic selection of the focused most-recent profile at startup
 
 ## Tested on
 
@@ -21,7 +25,7 @@ Other models may work but have not been verified.
 
 > **Note**
 >
-> Press the 🟩 **Green** button on your remote to access the configuration
+> Press the **Green** button on your remote to access the configuration
 > screen.
 
 ---
@@ -92,7 +96,8 @@ npm run test:compat
 npm run package
 ```
 
-The compatibility check parses every generated JavaScript file as ES5. The
+The compatibility check parses every generated JavaScript file as ES5 and
+fails if an artifact is missing, empty, or contains newer syntax. The
 `.ipk` file is generated in the project root and can be installed with Device
 Manager or the webOS CLI.
 
