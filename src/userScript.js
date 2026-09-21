@@ -17,36 +17,89 @@ import './sponsorblock.js';
 import './ui.js';
 import './video-quality.js';
 
-// This IIFE is to keep the video element fill the entire window so that screensaver doesn't kick in.
-(async () => {
-  /** @type {HTMLVideoElement} */
-  const video = await waitForChildAdd(
-    document.body,
-    (node) => node instanceof HTMLVideoElement
-  );
+// Keep only the full-screen watch player sized to the viewport. Home-page
+// previews are also <video> elements; changing their inline style stretches
+// their thumbnail card and must not affect screensaver handling.
+let observedWatchVideo = null;
+let waitingForWatchVideo = false;
 
-  const playerCtrlObs = new MutationObserver(() => {
-    const style = video.style;
+function isWatchPage() {
+  return document.body.classList.contains('WEB_PAGE_TYPE_WATCH');
+}
 
-    const targetWidth = `${window.innerWidth}px`;
-    const targetHeight = `${window.innerHeight}px`;
-    const targetLeft = '0px';
-    // YT uses a negative top to hide player when not in use. Don't know why but let's not affect it.
-    const targetTop =
-      style.top === `-${window.innerHeight}px` ? style.top : '0px';
+function isHiddenVideo(video) {
+  const style = video.style;
+  return style.display === 'none' || style.top.indexOf('-') === 0;
+}
 
-    /**
-     * Check to see if identical before assignment as some webOS versions will trigger a mutation
-     * mutation event even if the assignment effectively does nothing, leading to an infinite loop.
-     */
-    style.width !== targetWidth && (style.width = targetWidth);
-    style.height !== targetHeight && (style.height = targetHeight);
-    style.left !== targetLeft && (style.left = targetLeft);
-    style.top !== targetTop && (style.top = targetTop);
-  });
+function fitWatchVideo(video) {
+  if (!isWatchPage() || isHiddenVideo(video)) return;
 
-  playerCtrlObs.observe(video, {
+  const style = video.style;
+  const targetWidth = `${window.innerWidth}px`;
+  const targetHeight = `${window.innerHeight}px`;
+
+  // Avoid recursive style mutations on older webOS implementations.
+  style.width !== targetWidth && (style.width = targetWidth);
+  style.height !== targetHeight && (style.height = targetHeight);
+  style.left !== '0px' && (style.left = '0px');
+  style.top !== '0px' && (style.top = '0px');
+}
+
+const playerStyleObserver = new MutationObserver((mutations, observer) => {
+  if (!isWatchPage()) {
+    observer.disconnect();
+    observedWatchVideo = null;
+    return;
+  }
+
+  const video = mutations[0] && mutations[0].target;
+  if (video instanceof HTMLVideoElement) {
+    fitWatchVideo(video);
+  }
+});
+
+function observeWatchVideo(video) {
+  if (observedWatchVideo === video) return;
+
+  playerStyleObserver.disconnect();
+  observedWatchVideo = video;
+  playerStyleObserver.observe(video, {
     attributes: true,
     attributeFilter: ['style']
   });
-})();
+  fitWatchVideo(video);
+}
+
+function bindWatchVideo() {
+  if (!isWatchPage()) {
+    playerStyleObserver.disconnect();
+    observedWatchVideo = null;
+    return;
+  }
+
+  const video = document.querySelector('video');
+  if (video instanceof HTMLVideoElement) {
+    observeWatchVideo(video);
+    return;
+  }
+
+  if (waitingForWatchVideo) return;
+  waitingForWatchVideo = true;
+  waitForChildAdd(document.body, (node) => node instanceof HTMLVideoElement)
+    .then((watchVideo) => {
+      waitingForWatchVideo = false;
+      if (isWatchPage()) observeWatchVideo(watchVideo);
+    })
+    .catch((err) => {
+      waitingForWatchVideo = false;
+      console.warn('[screensaver] unable to find watch video:', err);
+    });
+}
+
+const bodyClassObserver = new MutationObserver(bindWatchVideo);
+bodyClassObserver.observe(document.body, {
+  attributes: true,
+  attributeFilter: ['class']
+});
+bindWatchVideo();
