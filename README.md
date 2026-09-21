@@ -6,14 +6,13 @@ webOS 1.x/2.x.
 
 ## Features
 
-- Hardened YouTube advertisement blocking for player and Shorts responses
-- SponsorBlock with coloured timeline markers and segment skipping
+- Ad Blocking for videos and Shorts
+- [SponsorBlock](https://sponsor.ajay.app/) Integration with coloured timeline markers and automatic segment skipping
+- [Autostart Support](#autostart)
 - GREEN-button configuration
-- Fix for the black player overlay shown with current YouTube TV controls
-- Fix for Magic Remote reopening the search keyboard from search results
-- Optional Force Maximum Video Quality setting (disabled by default)
-- Optional Hide YouTube logo setting (disabled by default)
-- Safe automatic selection of the focused most-recent profile at startup
+- Force Maximum Video Quality
+- YouTube Logo Removal
+- Bypass account selector screen
 
 ## Tested on
 
