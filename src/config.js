@@ -8,7 +8,8 @@ const defaultConfig = {
   enableSponsorBlockInteraction: true,
   enableSponsorBlockSelfPromo: true,
   enableSponsorBlockMusicOfftopic: true,
-  forceHighResVideo: false
+  forceHighResVideo: false,
+  hideLogo: false
 };
 
 let localConfig;

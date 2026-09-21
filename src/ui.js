@@ -99,6 +99,17 @@ function handleMagicRemoteSearchClick(evt) {
   return true;
 }
 
+function applyHideLogo() {
+  const hideLogo = configRead('hideLogo');
+  const root = document.documentElement;
+
+  root.classList.remove('ytaf-logo-hidden');
+
+  if (hideLogo) {
+    root.classList.add('ytaf-logo-hidden');
+  }
+}
+
 const uiContainer = document.createElement('div');
 uiContainer.classList.add('ytaf-ui-container');
 uiContainer.style['display'] = 'none';
@@ -123,7 +134,15 @@ uiContainer.addEventListener(
         navigate(ARROW_KEY_CODE[evt.keyCode]);
       } else if (evt.keyCode === 13) {
         // "OK" button
-        document.querySelector(':focus').click();
+        // YouTube also generates an Event-based click for some remote actions.
+        // Only turn native keyboard events into a click, otherwise a checkbox
+        // can be toggled twice or only focused.
+        if (
+          typeof KeyboardEvent === 'undefined' ||
+          evt instanceof KeyboardEvent
+        ) {
+          document.activeElement.click();
+        }
       } else if (evt.keyCode === 27) {
         // Back button
         uiContainer.style.display = 'none';
@@ -140,6 +159,7 @@ uiContainer.innerHTML = `
 <h1>webOS YouTube Extended</h1>
 <label for="__adblock"><input type="checkbox" id="__adblock" /> Enable AdBlocking</label>
 <label for="__force_high_res_video"><input type="checkbox" id="__force_high_res_video" /> Force Maximum Video Quality</label>
+<label for="__hide_logo"><input type="checkbox" id="__hide_logo" /> Hide YouTube logo</label>
 <label for="__sponsorblock"><input type="checkbox" id="__sponsorblock" /> Enable SponsorBlock</label>
 <blockquote>
 <label for="__sponsorblock_sponsor"><input type="checkbox" id="__sponsorblock_sponsor" /> Skip Sponsor Segments</label>
@@ -166,6 +186,12 @@ uiContainer
   .addEventListener('change', (evt) => {
     configWrite('forceHighResVideo', evt.target.checked);
   });
+
+uiContainer.querySelector('#__hide_logo').checked = configRead('hideLogo');
+uiContainer.querySelector('#__hide_logo').addEventListener('change', (evt) => {
+  configWrite('hideLogo', evt.target.checked);
+  applyHideLogo();
+});
 
 uiContainer.querySelector('#__sponsorblock').checked =
   configRead('enableSponsorBlock');
@@ -327,3 +353,4 @@ function applyUIFixes() {
 }
 
 applyUIFixes();
+applyHideLogo();

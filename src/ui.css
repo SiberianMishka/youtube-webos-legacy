@@ -33,6 +33,12 @@
   font-size: 2rem;
 }
 
+/* Live DOM: only the YouTube shell wordmark uses these elements. */
+html.ytaf-logo-hidden ytlr-redux-connect-ytlr-logo-entity,
+html.ytaf-logo-hidden ytlr-logo-entity {
+  visibility: hidden !important;
+}
+
 .ytaf-notification-container {
   position: absolute;
   right: 10px;
